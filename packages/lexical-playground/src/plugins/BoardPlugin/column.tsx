@@ -72,6 +72,7 @@ const Column: React.FC<ColumnProps> = (props) => {
     updateColumnName(columnId, editedTitle);
     setIsEditing(false);
   };
+
   return (
     <>
       <div
@@ -122,6 +123,7 @@ const Column: React.FC<ColumnProps> = (props) => {
         <div className="my-3 space-y-2">
           {cards.map((card) => (
             <Card
+              key={card.id}
               cardId={card.id}
               columnId={columnId}
               content={card.content}

@@ -60,10 +60,14 @@ const Board: React.FC = () => {
     [],
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    setIsCardDragging(null);
-    e.preventDefault();
-  }, []);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
+      setIsCardDragging(null);
+      setIsCardDragging(targetColumnId);
+      e.preventDefault();
+    },
+    [],
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
@@ -72,6 +76,8 @@ const Board: React.FC = () => {
       if (!draggedCard) {
         return;
       }
+
+      setIsCardDragging(null);
 
       setColumns((prevColumns) => {
         const newColumns = prevColumns.map((column) => {
@@ -216,21 +222,26 @@ const Board: React.FC = () => {
       />
       <div className="relative mx-auto my-0 flex flex-1">
         {columns.map((column) => (
-          <Column
-            key={column.id}
-            columnId={column.id}
-            handleDragOver={handleDragOver}
-            handleDrop={handleDrop}
-            title={column.title}
-            cards={column.cards}
-            handleDragStart={handleDragStart}
-            openCardModal={openCardModal}
-            isCardDragging={isCardDragging}
-            updateCards={updateCards}
-            updateCardContent={updateCardContent}
-            updateColumnName={updateColumnName}
-            deleteColumn={deleteColumn}
-          />
+          <div
+            className={
+              isCardDragging === column.id ? ' rounded-lg bg-neutral-100' : ''
+            }
+            key={column.id}>
+            <Column
+              columnId={column.id}
+              handleDragOver={(e) => handleDragOver(e, column.id)}
+              handleDrop={handleDrop}
+              title={column.title}
+              cards={column.cards}
+              handleDragStart={handleDragStart}
+              openCardModal={openCardModal}
+              isCardDragging={isCardDragging}
+              updateCards={updateCards}
+              updateCardContent={updateCardContent}
+              updateColumnName={updateColumnName}
+              deleteColumn={deleteColumn}
+            />
+          </div>
         ))}
       </div>
       <Modal
