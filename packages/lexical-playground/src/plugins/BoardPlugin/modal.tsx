@@ -6,8 +6,6 @@
  *
  */
 
-import './board.css';
-
 import {CSSProperties, useEffect, useState} from 'react';
 
 interface ModalProps {
@@ -26,7 +24,7 @@ const Modal: React.FC<ModalProps> = (props) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleOnClose();
       }
     };
 
@@ -41,18 +39,12 @@ const Modal: React.FC<ModalProps> = (props) => {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
-    return null;
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (value) {
       onSubmit(value);
-      setValue('');
     }
-
-    onClose();
+    handleOnClose();
   };
 
   const modalStyle: CSSProperties = position
@@ -63,9 +55,18 @@ const Modal: React.FC<ModalProps> = (props) => {
       }
     : {};
 
+  const handleOnClose = () => {
+    onClose();
+    setValue('');
+  };
+
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950 opacity-50">
-      <form onSubmit={handleSubmit} style={modalStyle}>
+      <form onSubmit={handleSubmit} style={modalStyle} onBlur={handleOnClose}>
         <input
           type="text"
           value={value}

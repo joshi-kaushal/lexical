@@ -10,9 +10,9 @@ import './board.css';
 
 import {useCallback, useState} from 'react';
 
-import {Card as CardType} from './board';
 import Card from './card';
 import {DeleteIcon, EditIcon} from './icons';
+import {CardType} from './types';
 
 interface ColumnProps {
   columnId: string;
@@ -29,11 +29,11 @@ interface ColumnProps {
     columnId: string,
   ) => void;
   openCardModal: (e: React.MouseEvent, columnId: string) => void;
-  isCardDragging: string | null;
   updateCards: (columnId: string, updatedCards: CardType[]) => void;
   updateCardContent: (cardId: string, editedContent: string) => void;
   updateColumnName: (columnId: string, newName: string) => void;
   deleteColumn: (columnId: string) => void;
+  isCardDragging: string | null;
 }
 
 const Column: React.FC<ColumnProps> = (props) => {
@@ -45,11 +45,11 @@ const Column: React.FC<ColumnProps> = (props) => {
     cards,
     handleDragStart,
     openCardModal,
-    isCardDragging,
     updateColumnName,
     deleteColumn,
     updateCards,
     updateCardContent,
+    isCardDragging,
   } = props;
 
   const [isEditing, setIsEditing] = useState(false);
@@ -81,28 +81,34 @@ const Column: React.FC<ColumnProps> = (props) => {
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, columnId)}>
         <div
-          className="flex items-center justify-between  p-2.5"
+          className="flex items-center justify-between p-2.5"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}>
-          {isEditing ? (
-            <input
-              className="mb-0.5 border-b border-none border-slate-900 bg-transparent text-lg font-semibold outline-none"
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-              onBlur={handleSave}
-              autoFocus={true}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSave();
-                } else if (e.key === 'Escape') {
-                  setIsEditing(false);
-                  setEditedTitle(title);
-                }
-              }}
-            />
-          ) : (
-            <h2 className="mb-0.5 text-lg font-semibold">{title}</h2>
-          )}
+          <div className="w-8/12">
+            {isEditing ? (
+              <input
+                className="mb-0.5 border-b border-none border-slate-900 bg-transparent text-lg font-semibold outline-none"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={handleSave}
+                autoFocus={true}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSave();
+                  } else if (e.key === 'Escape') {
+                    setIsEditing(false);
+                    setEditedTitle(title);
+                  }
+                }}
+              />
+            ) : (
+              <h2
+                className="mb-0.5 truncate text-lg font-semibold"
+                title={title}>
+                {title}
+              </h2>
+            )}
+          </div>
           {isHovered && !isEditing && (
             <div className="space-x-2 transition-all duration-300 ease-in-out">
               <button
@@ -128,12 +134,19 @@ const Column: React.FC<ColumnProps> = (props) => {
               columnId={columnId}
               content={card.content}
               handleDragStart={handleDragStart}
-              isCardDragging={isCardDragging}
               deleteCard={deleteCard}
               updateCardContent={updateCardContent}
             />
           ))}
         </div>
+
+        <div
+          className={`${
+            isCardDragging === columnId
+              ? 'border-b-2 border-r-2 border-blue-300'
+              : 'border-2 border-transparent'
+          }`}
+        />
         <button
           onClick={(e) => openCardModal(e, columnId)}
           className="mt-0.5 w-fit rounded-lg border-none bg-transparent px-2 py-1.5 outline-none transition-all duration-300 ease-in-out hover:bg-neutral-200">

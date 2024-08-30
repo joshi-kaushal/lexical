@@ -15,7 +15,6 @@ interface CardProps {
   cardId: string;
   columnId: string;
   content: string;
-  isCardDragging: string | null;
   handleDragStart: (
     e: React.DragEvent<HTMLDivElement>,
     cardId: string,
@@ -30,7 +29,6 @@ const Card: React.FC<CardProps> = (props) => {
     cardId,
     columnId,
     handleDragStart,
-    isCardDragging,
     content,
     deleteCard,
     updateCardContent,
@@ -45,7 +43,8 @@ const Card: React.FC<CardProps> = (props) => {
     setIsSidebarOpen(true);
   };
 
-  const handleEdit = () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsEditing(true);
   };
 
@@ -63,9 +62,7 @@ const Card: React.FC<CardProps> = (props) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleCardClick}
-        className={`${
-          isCardDragging ? 'BoardPlugin__cardDragging' : ''
-        } relative flex cursor-pointer items-center justify-between rounded-lg bg-white p-1 shadow-md transition-shadow duration-300 ease-in-out hover:bg-neutral-100 hover:shadow-lg`}>
+        className="relative flex cursor-pointer items-center justify-between rounded-lg bg-white p-1 shadow-md transition-shadow duration-300 ease-in-out hover:bg-neutral-100 hover:shadow-lg">
         {isEditing ? (
           <input
             value={editedContent}

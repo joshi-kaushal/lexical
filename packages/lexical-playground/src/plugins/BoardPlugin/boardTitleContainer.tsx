@@ -19,10 +19,10 @@ const BoardTitleContainer: React.FC<BoardTitleContainerProps> = (props) => {
     props;
 
   return (
-    <div className="flex w-full flex-col lg:flex-row lg:items-start lg:justify-between">
+    <div className="flex w-full flex-col items-start overflow-x-clip lg:flex-row">
       {isEditing! ? (
         <input
-          className="w-full bg-transparent px-2 py-1.5 text-lg font-bold outline-none transition duration-300 ease-in-out"
+          className="w-fit bg-transparent px-2 py-1.5 text-lg font-bold outline-none transition duration-300 ease-in-out"
           type="text"
           placeholder="Board name"
           autoFocus={true}

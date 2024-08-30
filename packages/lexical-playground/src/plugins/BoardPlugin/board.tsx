@@ -11,32 +11,15 @@ import './board.css';
 import React, {memo, useCallback, useEffect, useState} from 'react';
 
 import BoardTitleContainer from './boardTitleContainer';
-import Card from './card';
 import Column from './column';
+import {useHorizontalOverflow} from './hooks/useHorizontalOverflow';
 import Modal from './modal';
-
-export interface Card {
-  id: string;
-  content: string;
-}
-
-export interface Column {
-  id: string;
-  title: string;
-  cards: Card[];
-}
-
-export type ModalPositionType =
-  | {
-      top: number;
-      left: number;
-    }
-  | undefined;
+import {CardType, ColumnType, ModalPositionType} from './types';
 
 const Board: React.FC = () => {
   const [boardTitle, setBoardTitle] = useState('');
   const [isEditing, setIsEditing] = useState(true);
-  const [columns, setColumns] = useState<Column[]>([
+  const [columns, setColumns] = useState<ColumnType[]>([
     {cards: [], id: 'todo', title: 'To Do'},
     {cards: [], id: 'ongoing', title: 'Ongoing'},
     {cards: [], id: 'done', title: 'Done'},
@@ -51,6 +34,8 @@ const Board: React.FC = () => {
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [modalPosition, setModalPosition] =
     useState<ModalPositionType>(undefined);
+
+  const {scrollContainerRef, isOverflowing} = useHorizontalOverflow();
 
   const handleDragStart = useCallback(
     (e: React.DragEvent<HTMLDivElement>, cardId: string, columnId: string) => {
@@ -74,6 +59,11 @@ const Board: React.FC = () => {
       e.preventDefault();
 
       if (!draggedCard) {
+        return;
+      }
+
+      if (draggedCard.sourceColumnId === targetColumnId) {
+        setDraggedCard(null);
         return;
       }
 
@@ -109,7 +99,7 @@ const Board: React.FC = () => {
   );
 
   const addCard = useCallback((columnId: string, content: string) => {
-    const newCard: Card = {
+    const newCard: CardType = {
       content,
       id: Math.random().toString(36).substr(2, 9),
     };
@@ -122,7 +112,7 @@ const Board: React.FC = () => {
   }, []);
 
   const addColumn = useCallback((title: string) => {
-    const newColumn: Column = {
+    const newColumn: ColumnType = {
       cards: [],
       id: Math.random().toString(36).substr(2, 9),
       title,
@@ -144,13 +134,16 @@ const Board: React.FC = () => {
     setIsCardModalOpen(true);
   }, []);
 
-  const updateCards = useCallback((columnId: string, updatedCards: Card[]) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((column) =>
-        column.id === columnId ? {...column, cards: updatedCards} : column,
-      ),
-    );
-  }, []);
+  const updateCards = useCallback(
+    (columnId: string, updatedCards: CardType[]) => {
+      setColumns((prevColumns) =>
+        prevColumns.map((column) =>
+          column.id === columnId ? {...column, cards: updatedCards} : column,
+        ),
+      );
+    },
+    [],
+  );
 
   const updateCardContent = useCallback(
     (cardId: string, editedContent: string) => {
@@ -212,7 +205,7 @@ const Board: React.FC = () => {
   }, [boardTitle, columns]);
 
   return (
-    <div className="mx-auto flex flex-col overflow-x-scroll lg:w-8/12">
+    <div className="flex w-fit flex-col">
       <BoardTitleContainer
         isEditing={isEditing}
         boardTitle={boardTitle}
@@ -220,7 +213,11 @@ const Board: React.FC = () => {
         setIsEditing={setIsEditing}
         openColumnModal={openColumnModal}
       />
-      <div className="relative mx-auto my-0 flex flex-1">
+      <div
+        ref={scrollContainerRef}
+        className={`${
+          isOverflowing ? 'overflow-x-auto' : 'overflow-x-hidden'
+        } relative my-0 flex flex-1`}>
         {columns.map((column) => (
           <div
             className={
@@ -235,11 +232,11 @@ const Board: React.FC = () => {
               cards={column.cards}
               handleDragStart={handleDragStart}
               openCardModal={openCardModal}
-              isCardDragging={isCardDragging}
               updateCards={updateCards}
               updateCardContent={updateCardContent}
               updateColumnName={updateColumnName}
               deleteColumn={deleteColumn}
+              isCardDragging={isCardDragging}
             />
           </div>
         ))}
