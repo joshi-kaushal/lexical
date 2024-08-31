@@ -6,17 +6,27 @@
  *
  */
 
+/* eslint-disable sort-keys-fix/sort-keys-fix */
+
+import {useReducer} from 'react';
+
+import {BOARD_INITIAL_STATE, reducer} from './reducers/boardReducer';
+
 interface BoardTitleContainerProps {
   isEditing: boolean;
-  boardTitle: string;
-  setBoardTitle: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   openColumnModal: (e: React.MouseEvent) => void;
 }
 
 const BoardTitleContainer: React.FC<BoardTitleContainerProps> = (props) => {
-  const {isEditing, boardTitle, setBoardTitle, setIsEditing, openColumnModal} =
-    props;
+  const {isEditing, setIsEditing, openColumnModal} = props;
+
+  const [state, dispatch] = useReducer(reducer, BOARD_INITIAL_STATE);
+  const {boardTitle} = state;
+
+  const setBoardTitleAction = (title: string) => {
+    dispatch({type: 'SET_BOARD_TITLE', payload: title});
+  };
 
   return (
     <div className="flex w-full flex-col items-start overflow-x-clip lg:flex-row">
@@ -27,19 +37,19 @@ const BoardTitleContainer: React.FC<BoardTitleContainerProps> = (props) => {
           placeholder="Board name"
           autoFocus={true}
           value={boardTitle || ''}
-          onChange={(e) => setBoardTitle(e.target.value)}
+          onChange={(e) => setBoardTitleAction(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               setIsEditing(false);
-              setBoardTitle(e.currentTarget.value || 'Untitled board');
+              setBoardTitleAction(e.currentTarget.value || 'Untitled board');
             } else if (e.key === 'Escape') {
               setIsEditing(false);
-              setBoardTitle('Untitled board');
+              setBoardTitleAction('Untitled board');
             }
           }}
           onBlur={() => {
             setIsEditing(false);
-            setBoardTitle(boardTitle || 'Untitled board');
+            setBoardTitleAction(boardTitle || 'Untitled board');
           }}
         />
       ) : (

@@ -6,7 +6,7 @@
  *
  */
 
-import {CSSProperties, useEffect, useState} from 'react';
+import {CSSProperties, useCallback, useEffect, useState} from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -20,6 +20,19 @@ const Modal: React.FC<ModalProps> = (props) => {
   const {isOpen, onClose, onSubmit, title, position} = props;
 
   const [value, setValue] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (value) {
+      onSubmit(value);
+    }
+    handleOnClose();
+  };
+
+  const handleOnClose = useCallback(() => {
+    onClose();
+    setValue('');
+  }, [onClose]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,15 +50,7 @@ const Modal: React.FC<ModalProps> = (props) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (value) {
-      onSubmit(value);
-    }
-    handleOnClose();
-  };
+  }, [isOpen, onClose, handleOnClose]);
 
   const modalStyle: CSSProperties = position
     ? {
@@ -54,11 +59,6 @@ const Modal: React.FC<ModalProps> = (props) => {
         top: position.top,
       }
     : {};
-
-  const handleOnClose = () => {
-    onClose();
-    setValue('');
-  };
 
   if (!isOpen) {
     return null;

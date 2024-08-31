@@ -23,3 +23,8 @@ export type ModalPositionType =
       left: number;
     }
   | undefined;
+
+export type DraggedCardType = {
+  cardId: string;
+  sourceColumnId: string;
+} | null;

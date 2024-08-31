@@ -65,7 +65,7 @@ const Card: React.FC<CardProps> = (props) => {
         className="relative flex cursor-pointer items-center justify-between rounded-lg bg-white p-1 shadow-md transition-shadow duration-300 ease-in-out hover:bg-neutral-100 hover:shadow-lg">
         {isEditing ? (
           <input
-            value={editedContent}
+            defaultValue={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
             onBlur={handleSave}
             autoFocus={true}

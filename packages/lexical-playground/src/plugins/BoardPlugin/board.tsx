@@ -6,34 +6,34 @@
  *
  */
 
-import './board.css';
+/* eslint-disable sort-keys-fix/sort-keys-fix */
 
-import React, {memo, useCallback, useEffect, useState} from 'react';
+import React, {memo, useCallback, useEffect, useReducer, useState} from 'react';
 
 import BoardTitleContainer from './boardTitleContainer';
 import Column from './column';
 import {useHorizontalOverflow} from './hooks/useHorizontalOverflow';
 import Modal from './modal';
-import {CardType, ColumnType, ModalPositionType} from './types';
+import {BOARD_INITIAL_STATE, reducer} from './reducers/boardReducer';
+import {
+  CardType,
+  ColumnType,
+  DraggedCardType,
+  ModalPositionType,
+} from './types';
 
 const Board: React.FC = () => {
-  const [boardTitle, setBoardTitle] = useState('');
   const [isEditing, setIsEditing] = useState(true);
-  const [columns, setColumns] = useState<ColumnType[]>([
-    {cards: [], id: 'todo', title: 'To Do'},
-    {cards: [], id: 'ongoing', title: 'Ongoing'},
-    {cards: [], id: 'done', title: 'Done'},
-  ]);
   const [isCardDragging, setIsCardDragging] = useState<string | null>(null);
-  const [draggedCard, setDraggedCard] = useState<{
-    cardId: string;
-    sourceColumnId: string;
-  } | null>(null);
+  const [draggedCard, setDraggedCard] = useState<DraggedCardType>(null);
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [modalPosition, setModalPosition] =
     useState<ModalPositionType>(undefined);
+
+  const [state, dispatch] = useReducer(reducer, BOARD_INITIAL_STATE);
+  const {boardTitle, columns} = state;
 
   const {scrollContainerRef, isOverflowing} = useHorizontalOverflow();
 
@@ -69,56 +69,44 @@ const Board: React.FC = () => {
 
       setIsCardDragging(null);
 
-      setColumns((prevColumns) => {
-        const newColumns = prevColumns.map((column) => {
-          if (column.id === draggedCard.sourceColumnId) {
-            return {
-              ...column,
-              cards: column.cards.filter(
-                (card) => card.id !== draggedCard.cardId,
-              ),
-            };
-          }
-          if (column.id === targetColumnId) {
-            const cardToMove = prevColumns
-              .find((col) => col.id === draggedCard.sourceColumnId)
-              ?.cards.find((card) => card.id === draggedCard.cardId);
+      const cardToMove = columns
+        .find((col: ColumnType) => col.id === draggedCard.sourceColumnId)
+        ?.cards.find((card: CardType) => card.id === draggedCard.cardId);
 
-            return cardToMove
-              ? {...column, cards: [...column.cards, cardToMove]}
-              : column;
-          }
-          return column;
+      if (cardToMove) {
+        dispatch({
+          type: 'DELETE_CARD',
+          payload: {
+            columnId: draggedCard.sourceColumnId,
+            cardId: draggedCard.cardId,
+          },
         });
-        return newColumns;
-      });
+        dispatch({
+          type: 'ADD_CARD',
+          payload: {columnId: targetColumnId, card: cardToMove},
+        });
+      }
 
       setDraggedCard(null);
     },
-    [draggedCard],
+    [draggedCard, columns],
   );
 
   const addCard = useCallback((columnId: string, content: string) => {
     const newCard: CardType = {
       content,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString(),
     };
-
-    setColumns((prevColumns) =>
-      prevColumns.map((col) =>
-        col.id === columnId ? {...col, cards: [...col.cards, newCard]} : col,
-      ),
-    );
+    dispatch({type: 'ADD_CARD', payload: {columnId, card: newCard}});
   }, []);
 
   const addColumn = useCallback((title: string) => {
     const newColumn: ColumnType = {
       cards: [],
-      id: Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString(),
       title,
     };
-
-    setColumns((prevColumns) => [...prevColumns, newColumn]);
+    dispatch({type: 'ADD_COLUMN', payload: newColumn});
   }, []);
 
   const openColumnModal = useCallback((e: React.MouseEvent) => {
@@ -136,35 +124,28 @@ const Board: React.FC = () => {
 
   const updateCards = useCallback(
     (columnId: string, updatedCards: CardType[]) => {
-      setColumns((prevColumns) =>
-        prevColumns.map((column) =>
+      dispatch({
+        type: 'SET_COLUMNS',
+        payload: columns.map((column: ColumnType) =>
           column.id === columnId ? {...column, cards: updatedCards} : column,
         ),
-      );
+      });
     },
-    [],
+    [columns],
   );
 
   const updateCardContent = useCallback(
     (cardId: string, editedContent: string) => {
-      setColumns((prevColumns) =>
-        prevColumns.map((column) => ({
-          ...column,
-          cards: column.cards.map((card) =>
-            card.id === cardId ? {...card, content: editedContent} : card,
-          ),
-        })),
-      );
+      dispatch({
+        type: 'UPDATE_CARD_CONTENT',
+        payload: {cardId, content: editedContent},
+      });
     },
     [],
   );
 
   const updateColumnName = useCallback((columnId: string, newName: string) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((column) =>
-        column.id === columnId ? {...column, title: newName} : column,
-      ),
-    );
+    dispatch({type: 'UPDATE_COLUMN_NAME', payload: {columnId, newName}});
   }, []);
 
   const deleteColumn = useCallback(
@@ -173,10 +154,7 @@ const Board: React.FC = () => {
         alert('you must have at least one column');
         return;
       }
-
-      setColumns((prevColumns) =>
-        prevColumns.filter((column) => column.id !== columnId),
-      );
+      dispatch({type: 'DELETE_COLUMN', payload: columnId});
     },
     [columns],
   );
@@ -185,14 +163,8 @@ const Board: React.FC = () => {
     const savedData = localStorage.getItem('boardData');
     if (savedData) {
       const parsedData = JSON.parse(savedData);
-      setBoardTitle(parsedData.boardTitle);
-      setColumns(parsedData.columns);
-    } else {
-      setColumns([
-        {cards: [], id: 'todo', title: 'To Do'},
-        {cards: [], id: 'ongoing', title: 'Ongoing'},
-        {cards: [], id: 'done', title: 'Done'},
-      ]);
+      dispatch({type: 'SET_BOARD_TITLE', payload: parsedData.boardTitle});
+      dispatch({type: 'SET_COLUMNS', payload: parsedData.columns});
     }
   }, []);
 
@@ -208,8 +180,6 @@ const Board: React.FC = () => {
     <div className="flex w-fit flex-col">
       <BoardTitleContainer
         isEditing={isEditing}
-        boardTitle={boardTitle}
-        setBoardTitle={setBoardTitle}
         setIsEditing={setIsEditing}
         openColumnModal={openColumnModal}
       />
@@ -218,7 +188,7 @@ const Board: React.FC = () => {
         className={`${
           isOverflowing ? 'overflow-x-auto' : 'overflow-x-hidden'
         } relative my-0 flex flex-1`}>
-        {columns.map((column) => (
+        {columns.map((column: ColumnType) => (
           <div
             className={
               isCardDragging === column.id ? ' rounded-lg bg-neutral-100' : ''

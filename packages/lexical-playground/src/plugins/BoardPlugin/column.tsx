@@ -6,8 +6,6 @@
  *
  */
 
-import './board.css';
-
 import {useCallback, useState} from 'react';
 
 import Card from './card';
@@ -88,7 +86,7 @@ const Column: React.FC<ColumnProps> = (props) => {
             {isEditing ? (
               <input
                 className="mb-0.5 border-b border-none border-slate-900 bg-transparent text-lg font-semibold outline-none"
-                value={editedTitle}
+                defaultValue={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
                 onBlur={handleSave}
                 autoFocus={true}
